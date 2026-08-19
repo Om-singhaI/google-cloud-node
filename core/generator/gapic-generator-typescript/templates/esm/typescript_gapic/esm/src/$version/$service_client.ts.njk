@@ -203,6 +203,15 @@ export class {{ service.name }}Client {
       gaxInstance = gax as typeof gax;
     }
     {%- endif %}
+    
+    {%- if api.enableTelemetryTracing %}
+      opts.internalTelemetryInfo = {
+        gcpClientService: '{{ api.loggingName }}',
+        gcpClientVersion: '{{ api.naming.version }}',
+        gcpRepo: 'googleapis/google-cloud-node',
+        gcpArtifact: '{{ api.publishName }}',
+      }
+    {%- endif %}
 
     // Choose either gRPC or proto-over-HTTP implementation of google-gax.
     this._gaxModule = {% if not api.legacyProtoLoad %}opts.fallback ? gaxInstance.fallback : gaxInstance{% else %}gax{% endif %};
@@ -408,6 +417,15 @@ export class {{ service.name }}Client {
 {%- if service.apiVersion -%}
        , 'x-goog-api-version': '{{ service.apiVersion }}'
 {%- endif %}});
+
+    {%- if api.enableTelemetryTracing %}
+    if (opts.enableTelemetryTracing) {
+      for (const methodName of Object.keys(this._defaults)) {
+        this._defaults[methodName].enableTelemetryTracing = opts.enableTelemetryTracing;
+        this._defaults[methodName].internalTelemetryInfo = opts.internalTelemetryInfo;
+      }
+    }
+    {%- endif %}
 
     // Set up a dictionary of "inner API calls"; the core implementation
     // of calling the API is handled in `google-gax`, with this code
